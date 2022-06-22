@@ -10,17 +10,17 @@ data segment
 	fixdel2 dw 86a0h
 	sounddel1 dw 3
 	sounddel2 dw 0d090h
-	computerColors db 10 dup(?)
-	playerGuess db 10 dup(?)
-	msg1 db "Welcome to Simon Says!",10,13,'$'
-	msg2 db "Press ENTER to start the game",10,13,'$'
+	computerColors db 11 dup(?)
+	userGuess db 11 dup(?)
+	welcomeToGame db "Welcome to Simon Says!",10,13,'$'
+	pressAnyKey db "Press ENTER to start the game",10,13,'$'
+	gameOverMessage db "Game over :(",10,13,'$'
+	gameWinnerMessage db "YOU WON :)",10,13,'$'
 	clock equ es:6Ch
-	wrongColor db "Wrong",10,13,'$'
-	goodColor db "you are correct :)",10,13,'$'
-	randomNum db ?
 	userClickX dw ?
 	userClickY dw ?
-	currentTurn db 0
+	currentTurn dw 1
+	correctGuess db -1
 	
 data ends
 
@@ -327,8 +327,12 @@ proc shaveAndHaircut
 endp
 
 proc randomNumbers
+
+		xor cx, cx
+		xor si, si
+		
 		mov cx, 10
-		mov si, 0
+		mov si, 1
 		
 generateNum:
 		mov ax, 40h
@@ -341,11 +345,10 @@ generateNum:
 		and al, 00000011b
 		inc al
 		add al, '0'
-		mov randomNum[si], al
+		mov computerColors[si], al
 		inc si
 		loop generateNum
 	
-		xor si, si
 		
 		ret
 randomNumbers endp
@@ -353,21 +356,21 @@ randomNumbers endp
 
 proc numberSquare
 
-	mov cl, currentTurn
+	mov cx, currentTurn
+	mov si, 1
 	
 printComputer:
-	mov dl, randomNum[cl]
-	
-	cmp dl, 49
+
+	cmp computerColors[si], 49
 	je Blue
 
-	cmp dl, 50
+	cmp computerColors[si], 50
 	je Green
 
-	cmp dl, 51
+	cmp computerColors[si], 51
 	je red
 
-	cmp dl, 52
+	cmp computerColors[si], 52
 	je Yellow
 
 	
@@ -389,8 +392,10 @@ Yellow:
 	jmp done
 	
 done:
-	cmp cl,0
-    jnz	printComputer
+	inc si
+	dec cx
+	jnz printComputer
+	
 	ret
 endp
 
@@ -421,11 +426,17 @@ handleMouse endp
 
 
 proc getSquareNumber
+
+	mov si, 1
+	mov cx, currentTurn
+	
+addUserArray:
 	cmp userClickX, 160
 	jbe blueRedClick
 	cmp userClickY, 90
 	jbe greenClick
 	call pressYellow
+	mov userGuess[si], '4'
 	jmp sofp
 	
 	
@@ -433,46 +444,117 @@ blueRedClick:
 	cmp userClickY, 90
 	jbe blueClick
 	call pressRed
+	mov userGuess[si], '3'
 	jmp sofp
 
 blueClick:
 	call pressBlue
+	mov userGuess[si], '1'
 	jmp sofp
 	
 greenClick:
 		call pressGreen
-		jmp sofp
+		mov userGuess[si], '2'
+		
 
 sofp:
+	call checkRightSquare
+	inc si
+	dec cx
+	cmp cx, 0
+	jnz addUserArray
 	ret
+	
 endp getSquareNumber
 
-start:  mov ax,data
-        mov ds,ax
-         
-        
-		mov ax, 13h
-        int 10h	
 
-call printStart
-call sleep05
-call shaveAndHaircut
-call sleep05
-call randomNumbers
+proc showMenu
+	mov dx, offset welcomeToGame
+	mov ah, 9h
+	int 21h
+	
+	mov dx, offset pressAnyKey
+	mov ah, 9h
+	int 21h
+	
+	xor ah, ah
+	int 16h
+
+	ret
+	
+endp showMenu
+
+proc checkRightSquare
+
+	mov cx, currentTurn
+	mov si, 1
+	
+checkNumbers:
+	mov ah, computerColors[si]
+	cmp ah, userGuess[si]
+	jne stopCheck
+	inc si
+	dec cx
+	cmp cx, 0
+	jnz checkNumbers
+	jmp goBack
+	
+stopCheck:
+	mov correctGuess, 0
+	
+goBack:	
+	ret
+	
+checkRightSquare endp
+	
+
+start:  
+	mov ax,data
+    mov ds,ax
+         	
+		
+	call showMenu
+	
+	mov ax, 13h
+    int 10h
+	
+	
+	call printStart
+	call randomNumbers
+	call shaveAndHaircut
+	call sleep05
+	
 gameLoop:
+
 	call numberSquare
 	call handleMouse
 	call getSquareNumber
+	call sleep05
+	cmp correctGuess, 0
+	je gameOver
 	inc currentTurn
+	cmp currentTurn, 11
+	je gameWinner
 	jmp gameLoop
+	
+gameOver:
+	mov dx, offset gameOverMessage
+	mov ah, 9h
+	int 21h
+	jmp continue
+	
+gameWinner:
+	mov dx, offset gameWinnerMessage
+	mov ah, 9h
+	int 21h
+	
+	
+    xor ah, ah
+	int 16h
 
-
-		 
-        xor ah, ah
-		int 16h
-
-exit:    mov ah,4ch
-         int 21h
+exit:    
+	mov ah,4ch
+    int 21h
 
 code ends
 end start
