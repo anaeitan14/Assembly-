@@ -15,13 +15,12 @@ data segment
 	msg1 db "Welcome to Simon Says!",10,13,'$'
 	msg2 db "Press ENTER to start the game",10,13,'$'
 	clock equ es:6Ch
-	wrongColor db "YOUR PRESSED THE WRONG COLOR :(",10,13,'$'
+	wrongColor db "Wrong",10,13,'$'
 	goodColor db "you are correct :)",10,13,'$'
 	randomNum db ?
-	blueSquare EQU 49
-	greenSquare EQU 50
-	redSquare EQU 51
-	yellowSquare EQU 52
+	userClickX dw ?
+	userClickY dw ?
+	currentTurn db 0
 	
 data ends
 
@@ -327,7 +326,11 @@ proc shaveAndHaircut
 	ret
 endp
 
-proc random
+proc randomNumbers
+		mov cx, 10
+		mov si, 0
+		
+generateNum:
 		mov ax, 40h
 		mov es, ax 
 		call sleep05
@@ -338,15 +341,22 @@ proc random
 		and al, 00000011b
 		inc al
 		add al, '0'
-		mov dl, al
-		
-		mov randomNum, dl
+		mov randomNum[si], al
+		inc si
+		loop generateNum
 	
+		xor si, si
+		
 		ret
-random endp
+randomNumbers endp
 
 
 proc numberSquare
+
+	mov cl, currentTurn
+	
+printComputer:
+	mov dl, randomNum[cl]
 	
 	cmp dl, 49
 	je Blue
@@ -379,11 +389,13 @@ Yellow:
 	jmp done
 	
 done:
+	cmp cl,0
+    jnz	printComputer
 	ret
 endp
 
 
-proc playerTurn
+proc handleMouse
 		 mov ax, 0h ;Reset mouse
 		 int 33h
 		 
@@ -396,60 +408,44 @@ click:
 					;CX holds column coordinate, 0-629, must divide by 2 because graphic is 320
 					;DX holds row coordinate 0-199
 		
+		cmp bx, 0
+		je click
 		
+		shr cx, 1 ; divide cx by 2
 		
-		cmp bx,01h
-		jne click
-		
-		shr cx, 1
-		mov bh, 0
-		
-		mov ah, 0Dh
-		int 10h
-		
-		mov ah, 02h
-		int 21h
-		
-		cmp randomNum, 49
-		je checkBlue
-		cmp randomNum, 50
-		je checkGreen
-		cmp randomNum, 51
-		je checkRed
-		cmp randomNum, 52
-		je checkYellow
-		
-		
-checkBlue:
-	cmp al, 69h
-	jne wrong
-	call pressBlue
-	jmp endTurn
-checkGreen:
-	cmp al, 79h
-	jne wrong
-	call pressGreen
-	jmp endTurn
-checkRed:
-	cmp al, 70h
-	jne wrong
-	call pressRed
-	jmp endTurn
-checkYellow:
-	cmp al, 74h
-	jne wrong
-	call pressYellow
-	jmp endTurn
-
-wrong:
-			mov dx, offset wrongColor
-			mov ah, 9
-			int 21h
-endTurn:
+		mov userClickX, cx
+		mov userClickY, dx
+	
 		ret
+handleMouse endp
 
 
-playerTurn endp
+proc getSquareNumber
+	cmp userClickX, 160
+	jbe blueRedClick
+	cmp userClickY, 90
+	jbe greenClick
+	call pressYellow
+	jmp sofp
+	
+	
+blueRedClick:
+	cmp userClickY, 90
+	jbe blueClick
+	call pressRed
+	jmp sofp
+
+blueClick:
+	call pressBlue
+	jmp sofp
+	
+greenClick:
+		call pressGreen
+		jmp sofp
+
+sofp:
+	ret
+endp getSquareNumber
 
 start:  mov ax,data
         mov ds,ax
@@ -462,10 +458,12 @@ call printStart
 call sleep05
 call shaveAndHaircut
 call sleep05
+call randomNumbers
 gameLoop:
-	call random
 	call numberSquare
-	call playerTurn
+	call handleMouse
+	call getSquareNumber
+	inc currentTurn
 	jmp gameLoop
 
 
