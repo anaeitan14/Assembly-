@@ -1,5 +1,4 @@
 data segment
-
 	locx dw ?
 	locy dw ?
 	x dw ?
@@ -393,11 +392,10 @@ Yellow:
 	
 done:
 	inc si
-	dec cx
-	jnz printComputer
+	loop printComputer
 	
 	ret
-endp
+endp numberSquare
 
 
 proc handleMouse
@@ -426,11 +424,7 @@ handleMouse endp
 
 
 proc getSquareNumber
-
-	mov si, 1
-	mov cx, currentTurn
 	
-addUserArray:
 	cmp userClickX, 160
 	jbe blueRedClick
 	cmp userClickY, 90
@@ -455,14 +449,7 @@ blueClick:
 greenClick:
 		call pressGreen
 		mov userGuess[si], '2'
-		
-
 sofp:
-	call checkRightSquare
-	inc si
-	dec cx
-	cmp cx, 0
-	jnz addUserArray
 	ret
 	
 endp getSquareNumber
@@ -486,17 +473,9 @@ endp showMenu
 
 proc checkRightSquare
 
-	mov cx, currentTurn
-	mov si, 1
-	
-checkNumbers:
 	mov ah, computerColors[si]
 	cmp ah, userGuess[si]
 	jne stopCheck
-	inc si
-	dec cx
-	cmp cx, 0
-	jnz checkNumbers
 	jmp goBack
 	
 stopCheck:
@@ -507,6 +486,27 @@ goBack:
 	
 checkRightSquare endp
 	
+
+proc userTurn
+	mov cx, currentTurn
+	mov si, 1
+	
+turnLoop:
+	push cx
+	call handleMouse	
+	call getSquareNumber
+	call checkRightSquare
+	cmp correctGuess, 0 
+	je doneTurn
+	pop cx
+	inc si
+	loop turnLoop
+	
+doneTurn:
+	ret
+
+userTurn endp
+
 
 start:  
 	mov ax,data
@@ -520,15 +520,13 @@ start:
 	
 	
 	call printStart
-	call randomNumbers
-	call shaveAndHaircut
 	call sleep05
+	call shaveAndHaircut
+	call randomNumbers
 	
 gameLoop:
-
 	call numberSquare
-	call handleMouse
-	call getSquareNumber
+	call userTurn
 	call sleep05
 	cmp correctGuess, 0
 	je gameOver
@@ -549,7 +547,8 @@ gameWinner:
 	int 21h
 	
 	
-    xor ah, ah
+continue:
+	xor ah, ah
 	int 16h
 
 exit:    
@@ -558,5 +557,3 @@ exit:
 
 code ends
 end start
-
-
