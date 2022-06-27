@@ -11,10 +11,16 @@ data segment
 	sounddel2 dw 0d090h
 	computerColors db 11 dup(?)
 	userGuess db 11 dup(?)
-	welcomeToGame db "Welcome to Simon Says!",10,13,'$'
-	pressAnyKey db "Press ENTER to start the game",10,13,'$'
+	divisorTable db 10,1,0
+	welcomeToGame1 db "Welcome to Simon Says!",10,13,'$'
+	welcomeToGame2 db "1.Press ENTER to start the game...",10,13,'$'
+	welcomeToGame3 db "2.Press H for help...",10,13,'$'
+	gameHelp1 db "The game consists of 4 colored squares, each squares has its own tone.",10,13,'$'
+	gameHelp2 db "Click the same sequence as the computer without making any mistakes to win.",10,13,'$' 
+	gameHelp3 db "Press B to go back to the main menu...",10,13,'$'
 	gameOverMessage db "Game over :(",10,13,'$'
-	gameWinnerMessage db "YOU WON :)",10,13,'$'
+	gameWinnerMessage db "You won :)",10,13,'$'
+	pressAnyKey db "Press any key to continue...",10,13,'$'
 	clock equ es:6Ch
 	userClickX dw ?
 	userClickY dw ?
@@ -327,27 +333,26 @@ endp
 
 proc randomNumbers
 
-		xor cx, cx
-		xor si, si
-		
 		mov cx, 10
 		mov si, 1
 		
 generateNum:
-		mov ax, 40h
-		mov es, ax 
+		push cx
 		call sleep05
-		mov ax, [clock]
-		mov ah, [byte ptr cs:bx]
-		inc bx
-		xor al, ah
-		and al, 00000011b
-		inc al
-		add al, '0'
-		mov computerColors[si], al
+		mov ah, 00h
+		int 1Ah
+		
+		mov ax, dx
+		xor dx, dx
+		mov cx, 4
+		div cx
+		inc dl
+		
+		add dl, '0'
+		mov computerColors[si], dl
 		inc si
+		pop cx
 		loop generateNum
-	
 		
 		ret
 randomNumbers endp
@@ -456,17 +461,50 @@ endp getSquareNumber
 
 
 proc showMenu
-	mov dx, offset welcomeToGame
+startMenu:
+	mov dx, offset welcomeToGame1
 	mov ah, 9h
 	int 21h
 	
-	mov dx, offset pressAnyKey
+	mov dx, offset welcomeToGame2
 	mov ah, 9h
 	int 21h
 	
-	xor ah, ah
-	int 16h
-
+	mov dx, offset welcomeToGame3
+	mov ah, 9h
+	int 21h
+	
+readInput:
+	mov ah, 07
+	int 21h
+	
+	cmp al, 0Dh
+	je startGame
+	cmp al, 68h
+	je showHelp
+	jmp readInput
+	
+showHelp:
+		mov dx, offset gameHelp1
+		mov ah, 9h
+		int 21h
+		
+		mov dx, offset gameHelp2
+		mov ah, 9h
+		int 21h
+		
+		mov dx, offset gameHelp3
+		mov ah, 9h 
+		int 21h
+		
+compareKey:
+		mov ah, 07
+		int 21h
+		cmp al, 62h
+		je startMenu
+		jmp compareKey
+	
+startGame:
 	ret
 	
 endp showMenu
@@ -497,12 +535,16 @@ turnLoop:
 	call getSquareNumber
 	call checkRightSquare
 	cmp correctGuess, 0 
-	je doneTurn
+	je wrongChoice
 	pop cx
 	inc si
 	loop turnLoop
 	
 doneTurn:
+	ret
+	
+wrongChoice:
+	pop cx
 	ret
 
 userTurn endp
@@ -536,13 +578,28 @@ gameLoop:
 	jmp gameLoop
 	
 gameOver:
+	mov ax, 03
+	int 10h
+	
 	mov dx, offset gameOverMessage
 	mov ah, 9h
 	int 21h
+	
+	mov dx, offset pressAnyKey
+	mov ah, 9h
+	int 21h
+	
 	jmp continue
 	
 gameWinner:
+	mov ax, 03
+	int 10h
+	
 	mov dx, offset gameWinnerMessage
+	mov ah, 9h
+	int 21h
+	
+	mov dx, offset pressAnyKey
 	mov ah, 9h
 	int 21h
 	
