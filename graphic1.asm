@@ -9,28 +9,27 @@ data segment
 	fixdel2 dw 86a0h
 	sounddel1 dw 3
 	sounddel2 dw 0d090h
-	computerColors db 11 dup(?)
-	userGuess db 11 dup(?)
-	divisorTable db 10,1,0
+	computerColors db 11 dup (?)
+	userGuess db 11 dup (?)
 	welcomeToGame1 db "Welcome to Simon Says!",10,13,'$'
-	welcomeToGame2 db "1.Press ENTER to start the game...",10,13,'$'
-	welcomeToGame3 db "2.Press H for help...",10,13,'$'
-	gameHelp1 db "The game consists of 4 colored squares, each squares has its own tone.",10,13,'$'
+	welcomeToGame2 db "Press <ENTER> to start the game...",10,13,'$'
+	welcomeToGame3 db "Press <H> for help...",10,13,'$'
+	gameHelp1 db "The game consists of 4 colored squares additionally each square has its own sound.",10,13,'$'
 	gameHelp2 db "Click the same sequence as the computer without making any mistakes to win.",10,13,'$' 
-	gameHelp3 db "Press B to go back to the main menu...",10,13,'$'
+	gameHelp3 db "Press <B> to go back to the main menu...",10,13,'$'
 	gameOverMessage db "Game over :(",10,13,'$'
 	gameWinnerMessage db "You won :)",10,13,'$'
 	pressAnyKey db "Press any key to continue...",10,13,'$'
-	clock equ es:6Ch
 	userClickX dw ?
 	userClickY dw ?
 	currentTurn dw 1
 	correctGuess db -1
+	Clock equ es:6Ch
 	
 data ends
 
 sseg segment stack
-  DW 500 dup (?) 
+  DW 1000 dup (?) 
   
 sseg ends
 
@@ -117,8 +116,7 @@ proc pressBlue
 
 		mov cx, [fixdel1]	;sleep 0.1 sec
 		mov dx, [fixdel2]
-		mov ah, 86h
-		int 15h
+		call delay01
 		
 		
 		mov [color], 9 ;light blue
@@ -128,8 +126,7 @@ proc pressBlue
 		
 		mov cx, [sounddel1]	;sleep 0.25 sec
 		mov dx, [sounddel2]
-		mov ah, 86h
-		int 15h
+		call delay025
 		
 		in al, 61h	;close speacker
 		and al, 0fch
@@ -137,8 +134,7 @@ proc pressBlue
 		
 		mov cx, [fixdel1]	;sleep 0.1 sec
 		mov dx, [fixdel2]
-		mov ah, 86h
-		int 15h
+		call delay01
 		
 		mov [color], 69h ;dark blue
 		mov [locx], 80
@@ -165,8 +161,7 @@ proc pressGreen
 
 		mov cx, [fixdel1]	;sleep 0.1 sec
 		mov dx, [fixdel2]
-		mov ah, 86h
-		int 15h
+		call delay01
 		
 		
 		mov [color], 10 ;light green
@@ -176,8 +171,7 @@ proc pressGreen
 		
 		mov cx, [sounddel1]	;sleep 0.25 sec
 		mov dx, [sounddel2]
-		mov ah, 86h
-		int 15h
+		call delay025
 		
 		in al, 61h	;close speacker
 		and al, 0fch
@@ -185,8 +179,7 @@ proc pressGreen
 		
 		mov cx, [fixdel1]	;sleep 0.1 sec
 		mov dx, [fixdel2]
-		mov ah, 86h
-		int 15h
+		call delay01
 		
 		mov [color], 79h ;dark green
 		mov [locx], 170
@@ -213,8 +206,7 @@ proc pressRed
 
 		mov cx, [fixdel1]	;sleep 0.1 sec
 		mov dx, [fixdel2]
-		mov ah, 86h
-		int 15h
+		call delay01
 		
 		
 		mov [color], 12 ;light red
@@ -224,8 +216,7 @@ proc pressRed
 		
 		mov cx, [sounddel1]	;sleep 0.25 sec
 		mov dx, [sounddel2]
-		mov ah, 86h
-		int 15h
+		call delay025
 		
 		in al, 61h	;close speacker
 		and al, 0fch
@@ -233,8 +224,7 @@ proc pressRed
 		
 		mov cx, [fixdel1]	;sleep 0.1 sec
 		mov dx, [fixdel2]
-		mov ah, 86h
-		int 15h
+		call delay01
 		
 		mov [color], 70h ;dark red
 		mov [locx], 80
@@ -262,8 +252,7 @@ proc pressYellow
 
 		mov cx, [fixdel1]	;sleep 0.1 sec
 		mov dx, [fixdel2]
-		mov ah, 86h
-		int 15h
+		call delay01
 		
 		
 		mov [color], 14 ;light yellow
@@ -273,8 +262,7 @@ proc pressYellow
 		
 		mov cx, [sounddel1]	;sleep 0.25 sec
 		mov dx, [sounddel2]
-		mov ah, 86h
-		int 15h
+		call delay025
 		
 		in al, 61h	;close speacker
 		and al, 0fch
@@ -282,8 +270,8 @@ proc pressYellow
 		
 		mov cx, [fixdel1]	;sleep 0.1 sec
 		mov dx, [fixdel2]
-		mov ah, 86h
-		int 15h
+		call delay01
+		
 		
 		mov [color], 74h ;dark yellow
 		mov [locx], 170
@@ -295,19 +283,7 @@ proc pressYellow
 		pop ax
 		ret
 endp
-proc sleep05
-		push ax
-		push cx
-		push dx
-		mov cx,7h
-		mov dx, 0a120h
-		mov ah, 86h
-		int 15h
-		pop dx
-		pop cx
-		pop ax
-		ret
-endp
+
 proc shaveAndHaircut
 	call pressYellow
 	mov [sounddel1], 0
@@ -332,30 +308,27 @@ proc shaveAndHaircut
 endp
 
 proc randomNumbers
-
 		mov cx, 10
-		mov si, 1
+		mov bx, 1
 		
 generateNum:
 		push cx
-		call sleep05
-		mov ah, 00h
-		int 1Ah
 		
+		xor ah, ah
+		int 1Ah
+		call delay01
 		mov ax, dx
 		xor dx, dx
 		mov cx, 4
 		div cx
 		inc dl
-		
 		add dl, '0'
-		mov computerColors[si], dl
-		inc si
+		mov computerColors[bx], dl
+		inc bx
 		pop cx
 		loop generateNum
-		
 		ret
-randomNumbers endp
+endp
 
 
 proc numberSquare
@@ -400,22 +373,17 @@ done:
 	loop printComputer
 	
 	ret
-endp numberSquare
+endp 
 
 
 proc handleMouse
-		 mov ax, 0h ;Reset mouse
-		 int 33h
-		 
-		 mov ax, 1h ;Display mouse to user
-		 int 33h
+		mov ax, 1h 
+		int 33h
 		 
 click:
-		 mov ax, 3h ;Result to be displayed in BX, is LSB=1 Left click, if left to LSB=1 Rightclick
-		 int 33h	;If both = 0, no click at all
-					;CX holds column coordinate, 0-629, must divide by 2 because graphic is 320
-					;DX holds row coordinate 0-199
-		
+		mov ax, 3h 
+		int 33h	
+					
 		cmp bx, 0
 		je click
 		
@@ -425,7 +393,7 @@ click:
 		mov userClickY, dx
 	
 		ret
-handleMouse endp
+endp
 
 
 proc getSquareNumber
@@ -457,7 +425,7 @@ greenClick:
 sofp:
 	ret
 	
-endp getSquareNumber
+endp 
 
 
 proc showMenu
@@ -507,7 +475,7 @@ compareKey:
 startGame:
 	ret
 	
-endp showMenu
+endp 
 
 proc checkRightSquare
 
@@ -522,7 +490,7 @@ stopCheck:
 goBack:	
 	ret
 	
-checkRightSquare endp
+endp
 	
 
 proc userTurn
@@ -547,29 +515,78 @@ wrongChoice:
 	pop cx
 	ret
 
-userTurn endp
+endp
+
+proc delay01
+	push ax
+	push bx
+	push dx
+	
+	mov ax, [Clock]
+	
+firstTick:
+	cmp ax, [Clock]
+	je firstTick
+	mov cx, 2
+delayLoop:
+	mov ax, [Clock]
+Tick:
+	cmp ax, [Clock]
+	je Tick
+	loop delayLoop
+	
+	pop dx
+	pop bx
+	pop ax
+	ret
+endp
+
+proc delay025
+	push ax
+	push bx
+	push dx
+	
+	mov ax, [Clock]
+	
+firstTick2:
+	cmp ax, [Clock]
+	je firstTick2
+	mov cx, 5
+delayLoop2:
+	mov ax, [Clock]
+Tick2:
+	cmp ax, [Clock]
+	je Tick2
+	loop delayLoop2
+	
+	pop dx
+	pop bx
+	pop ax
+	ret
+endp
 
 
 start:  
 	mov ax,data
     mov ds,ax
+	mov ax, 40h
+	mov es, ax
          	
 		
 	call showMenu
 	
+	
 	mov ax, 13h
     int 10h
 	
-	
 	call printStart
-	call sleep05
+	call delay01
 	call shaveAndHaircut
 	call randomNumbers
 	
 gameLoop:
 	call numberSquare
 	call userTurn
-	call sleep05
 	cmp correctGuess, 0
 	je gameOver
 	inc currentTurn
