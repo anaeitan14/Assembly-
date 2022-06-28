@@ -4,22 +4,23 @@ data segment
 	x dw ?
 	y dw ?
 	color dw ?
-	godelsqw dw 80
-	fixdel1 dw 1
-	fixdel2 dw 86a0h
-	sounddel1 dw 3
-	sounddel2 dw 0d090h
+	Godelsqw equ 80
+	Fixdel equ 1
+	sounddel dw 8
+	delaytime dw 50
 	computerColors db 11 dup (?)
 	userGuess db 11 dup (?)
 	welcomeToGame1 db "Welcome to Simon Says!",10,13,'$'
-	welcomeToGame2 db "Press <ENTER> to start the game...",10,13,'$'
-	welcomeToGame3 db "Press <H> for help...",10,13,'$'
-	gameHelp1 db "The game consists of 4 colored squares additionally each square has its own sound.",10,13,'$'
+	welcomeToGame2 db "ENTER to start the game...",10,13,'$'
+	welcomeToGame3 db "H for help...",10,13,'$'
+	welcomeToGame4 db "E to exit...",10,13,'$'
+	gameHelp1 db "The game has 4 colores squares",10,13,'$'
 	gameHelp2 db "Click the same sequence as the computer without making any mistakes to win.",10,13,'$' 
-	gameHelp3 db "Press <B> to go back to the main menu...",10,13,'$'
+	gameHelp3 db "B to go back to the main menu...",10,13,'$'
 	gameOverMessage db "Game over :(",10,13,'$'
 	gameWinnerMessage db "You won :)",10,13,'$'
 	pressAnyKey db "Press any key to continue...",10,13,'$'
+	score db "Score:$"
 	userClickX dw ?
 	userClickY dw ?
 	currentTurn dw 1
@@ -55,51 +56,7 @@ proc	printPix
 		pop ax
 		ret
 endp
-proc printSqw
-		
-		push cx
-		push [locy]
-		pop [y]     ; y = locy
-		mov cx, [godelsqw]
-la2:
-		push [locx]
-		pop [x]     ; x = locx
-		push cx
-		mov cx, [godelsqw]
-la1:
-		call printPix
-		inc [x]
-		loop la1
-		pop cx
-		;loop1 end
-		inc [y]
-		loop la2
-		;loop2 end
-		pop cx
-		ret
-endp
-proc printStart
-		mov [color], 69h ;dark blue
-		mov [locx], 80
-		mov [locy], 10
-		call printSqw
-		 
-		mov [color], 79h ;dark green
-		mov [locx], 170
-		mov [locy], 10
-		call printSqw	
-		
-		mov [color], 70h ;dark red
-		mov [locx], 80
-		mov [locy], 100
-		call printSqw	
-		
-		mov [color], 74h ;dark yellow
-		mov [locx], 170
-		mov [locy], 100
-		call printSqw
-		ret
-endp
+
 proc pressBlue
 		push ax
 		push cx
@@ -114,27 +71,25 @@ proc pressBlue
 		mov al, 11h
 		out 42h, al
 
-		mov cx, [fixdel1]	;sleep 0.1 sec
-		mov dx, [fixdel2]
-		call delay01
-		
+
+		mov [delaytime], Fixdel ;sleep 0.1 sec
+		call delay
 		
 		mov [color], 9 ;light blue
 		mov [locx], 80
 		mov [locy], 10
 		call printSqw
 		
-		mov cx, [sounddel1]	;sleep 0.25 sec
-		mov dx, [sounddel2]
-		call delay025
+		push [sounddel] ;sleep 0.25 sec
+		pop [delaytime]
+		call delay
 		
 		in al, 61h	;close speacker
 		and al, 0fch
 		out 61h, al
 		
-		mov cx, [fixdel1]	;sleep 0.1 sec
-		mov dx, [fixdel2]
-		call delay01
+		mov [delaytime], Fixdel
+		call delay
 		
 		mov [color], 69h ;dark blue
 		mov [locx], 80
@@ -159,9 +114,8 @@ proc pressGreen
 		mov al, 0fh
 		out 42h, al
 
-		mov cx, [fixdel1]	;sleep 0.1 sec
-		mov dx, [fixdel2]
-		call delay01
+		mov [delaytime], Fixdel ;sleep 0.1 sec
+		call delay
 		
 		
 		mov [color], 10 ;light green
@@ -169,17 +123,16 @@ proc pressGreen
 		mov [locy], 10
 		call printSqw
 		
-		mov cx, [sounddel1]	;sleep 0.25 sec
-		mov dx, [sounddel2]
-		call delay025
+		push [sounddel] ;sleep 0.25 sec
+		pop [delaytime]
+		call delay
 		
 		in al, 61h	;close speacker
 		and al, 0fch
 		out 61h, al
 		
-		mov cx, [fixdel1]	;sleep 0.1 sec
-		mov dx, [fixdel2]
-		call delay01
+		mov [delaytime], Fixdel ;sleep 0.1 sec
+		call delay
 		
 		mov [color], 79h ;dark green
 		mov [locx], 170
@@ -204,9 +157,8 @@ proc pressRed
 		mov al, 0eh
 		out 42h, al
 
-		mov cx, [fixdel1]	;sleep 0.1 sec
-		mov dx, [fixdel2]
-		call delay01
+		mov [delaytime], Fixdel ;sleep 0.1 sec
+		call delay
 		
 		
 		mov [color], 12 ;light red
@@ -214,17 +166,16 @@ proc pressRed
 		mov [locy], 100
 		call printSqw	
 		
-		mov cx, [sounddel1]	;sleep 0.25 sec
-		mov dx, [sounddel2]
-		call delay025
+		push [sounddel] ;sleep 0.25 sec
+		pop [delaytime]
+		call delay
 		
 		in al, 61h	;close speacker
 		and al, 0fch
 		out 61h, al
 		
-		mov cx, [fixdel1]	;sleep 0.1 sec
-		mov dx, [fixdel2]
-		call delay01
+		mov [delaytime], Fixdel ;sleep 0.1 sec
+		call delay
 		
 		mov [color], 70h ;dark red
 		mov [locx], 80
@@ -250,9 +201,8 @@ proc pressYellow
 		mov al, 0dh
 		out 42h, al
 
-		mov cx, [fixdel1]	;sleep 0.1 sec
-		mov dx, [fixdel2]
-		call delay01
+		mov [delaytime], Fixdel ;sleep 0.1 sec
+		call delay
 		
 		
 		mov [color], 14 ;light yellow
@@ -260,18 +210,16 @@ proc pressYellow
 		mov [locy], 100
 		call printSqw	
 		
-		mov cx, [sounddel1]	;sleep 0.25 sec
-		mov dx, [sounddel2]
-		call delay025
+		push [sounddel] ;sleep 0.25 sec
+		pop [delaytime]
+		call delay
 		
 		in al, 61h	;close speacker
 		and al, 0fch
 		out 61h, al
 		
-		mov cx, [fixdel1]	;sleep 0.1 sec
-		mov dx, [fixdel2]
-		call delay01
-		
+		mov [delaytime], Fixdel ;sleep 0.1 sec
+		call delay
 		
 		mov [color], 74h ;dark yellow
 		mov [locx], 170
@@ -284,39 +232,152 @@ proc pressYellow
 		ret
 endp
 
+proc printSqw
+		
+		push cx
+		push [locy]
+		pop [y]     ; y = locy
+		mov cx, godelsqw
+la2:
+		push [locx]
+		pop [x]     ; x = locx
+		push cx
+		mov cx, godelsqw
+la1:
+		call printPix
+		inc [x]
+		loop la1
+		pop cx
+		;loop1 end
+		inc [y]
+		loop la2
+		;loop2 end
+		pop cx
+		ret
+endp
+proc printStart
+		mov dx, offset score
+		mov ah, 09h
+		int 21h
+		
+		mov [color], 69h ;dark blue
+		mov [locx], 80
+		mov [locy], 10
+		call printSqw
+		 
+		mov [color], 79h ;dark green
+		mov [locx], 170
+		mov [locy], 10
+		call printSqw	
+		
+		mov [color], 70h ;dark red
+		mov [locx], 80
+		mov [locy], 100
+		call printSqw	
+		
+		mov [color], 74h ;dark yellow
+		mov [locx], 170
+		mov [locy], 100
+		call printSqw
+		ret
+endp
+
+
 proc shaveAndHaircut
+	push[sounddel]
+	mov [sounddel], 6 ; 0.5
 	call pressYellow
-	mov [sounddel1], 0
-	mov [sounddel2], 0c350h
+	mov [sounddel], 2 ; 0.25
 	call pressBlue
 	call pressBlue
-	mov [sounddel1], 4
-	mov [sounddel2], 93e0h
+	mov [sounddel], 6 ; 0.5
 	call pressGreen
-	mov [sounddel1], 0ch
-	mov [sounddel2], 3500h
+	mov [sounddel], 14 ; 1
 	call pressBlue
-	mov [sounddel1], 4
-	mov [sounddel2], 93e0h
+	mov [sounddel], 6 ; 0.5
 	call pressRed
-	mov [sounddel1], 0ch
-	mov [sounddel2], 3500h
+	mov [sounddel], 14 ; 1
 	call pressYellow
-	mov [sounddel1], 4
-	mov [sounddel2], 93e0h
+	pop [sounddel]
 	ret
 endp
+
+proc inTheJungle
+	push[sounddel]
+	mov [sounddel], 6 ; 0.5
+	call pressBlue
+	mov [sounddel], 2 ; 0.25
+	call pressGreen
+	mov [sounddel], 6 ; 0.5
+	call pressRed
+	call pressGreen
+	mov [sounddel], 2 ; 0.25
+	call pressRed
+	mov [sounddel], 6 ; 0.5
+	call pressYellow
+	mov [sounddel], 2 ; 0.25
+	call pressRed
+	mov [sounddel], 6 ; 0.5
+	call pressGreen
+	call pressBlue
+	mov [sounddel], 2 ; 0.25
+	call pressGreen
+	mov [sounddel], 6 ; 0.5
+	call pressRed
+	mov [sounddel], 2 ; 0.25
+	call pressGreen
+	mov [sounddel], 14 ; 1
+	call pressBlue
+	mov [sounddel], 2 ; 0.25
+	call pressRed
+	mov [sounddel], 30 ; 2
+	call pressGreen
+	pop [sounddel]
+	ret
+endp
+
+proc doReMi
+	push[sounddel]
+	mov [sounddel], 10 ; 0.75
+	call pressBlue
+	mov [sounddel], 2 ; 0.25
+	call pressGreen
+	mov [sounddel], 10 ; 0.75
+	call pressRed
+	mov [sounddel], 2 ; 0.25
+	call pressBlue
+	mov [sounddel], 6 ; 0.5
+	call pressRed
+	call pressBlue
+	mov [sounddel], 14 ; 1
+	call pressRed
+	mov [sounddel], 10 ; 0.75
+	call pressGreen
+	mov [sounddel], 2 ; 0.25
+	call pressRed
+	call pressYellow
+	call pressYellow
+	call pressRed
+	call pressGreen
+	mov [sounddel], 30 ; 2
+	call pressYellow
+	pop [sounddel]
+	ret
+endp
+
 
 proc randomNumbers
 		mov cx, 10
 		mov bx, 1
-		
+		mov si, 1
+			
 generateNum:
 		push cx
-		
 		xor ah, ah
+		mov delaytime, si
+		call delay
+		
 		int 1Ah
-		call delay01
 		mov ax, dx
 		xor dx, dx
 		mov cx, 4
@@ -325,6 +386,8 @@ generateNum:
 		add dl, '0'
 		mov computerColors[bx], dl
 		inc bx
+		inc si
+		
 		pop cx
 		loop generateNum
 		ret
@@ -442,6 +505,10 @@ startMenu:
 	mov ah, 9h
 	int 21h
 	
+	mov dx, offset welcomeToGame4
+	mov ah, 9h
+	int 21h
+	
 readInput:
 	mov ah, 07
 	int 21h
@@ -450,6 +517,8 @@ readInput:
 	je startGame
 	cmp al, 68h
 	je showHelp
+	cmp al, 65h
+	je exitGame
 	jmp readInput
 	
 showHelp:
@@ -474,6 +543,12 @@ compareKey:
 	
 startGame:
 	ret
+	
+exitGame:
+		mov ax, 03h
+		int 10h
+		mov ah, 4cH
+		int 21h
 	
 endp 
 
@@ -517,31 +592,7 @@ wrongChoice:
 
 endp
 
-proc delay01
-	push ax
-	push bx
-	push dx
-	
-	mov ax, [Clock]
-	
-firstTick:
-	cmp ax, [Clock]
-	je firstTick
-	mov cx, 2
-delayLoop:
-	mov ax, [Clock]
-Tick:
-	cmp ax, [Clock]
-	je Tick
-	loop delayLoop
-	
-	pop dx
-	pop bx
-	pop ax
-	ret
-endp
-
-proc delay025
+proc delay
 	push ax
 	push bx
 	push dx
@@ -551,7 +602,7 @@ proc delay025
 firstTick2:
 	cmp ax, [Clock]
 	je firstTick2
-	mov cx, 5
+	mov cx, [delaytime]
 delayLoop2:
 	mov ax, [Clock]
 Tick2:
@@ -565,23 +616,43 @@ Tick2:
 	ret
 endp
 
+proc addScore
+	mov dl, 6
+	mov dh, 0
+	mov bh, 0
+	
+	mov ax, currentTurn
+	add ax, '0'
+	mov ah, 02h
+	int 10h
+	
+	mov bl, 0Ch
+	mov bh, 0
+	mov ah, 0Eh
+	int 10h
+	ret
+endp
+
 
 start:  
 	mov ax,data
     mov ds,ax
 	mov ax, 40h
 	mov es, ax
-         	
-		
-	call showMenu
 	
 	
 	mov ax, 13h
     int 10h
+         		
+resetGame:
+	call showMenu
+	mov ax, 03h
+    int 10h
 	
+	mov ax, 13h
+    int 10h
+
 	call printStart
-	call delay01
-	call shaveAndHaircut
 	call randomNumbers
 	
 gameLoop:
@@ -590,14 +661,13 @@ gameLoop:
 	cmp correctGuess, 0
 	je gameOver
 	inc currentTurn
+	call addScore
 	cmp currentTurn, 11
 	je gameWinner
 	jmp gameLoop
 	
 gameOver:
-	mov ax, 03
-	int 10h
-	
+
 	mov dx, offset gameOverMessage
 	mov ah, 9h
 	int 21h
@@ -606,11 +676,10 @@ gameOver:
 	mov ah, 9h
 	int 21h
 	
-	jmp continue
+	jmp resetGame
 	
 gameWinner:
-	mov ax, 03
-	int 10h
+	call shaveAndHaircut
 	
 	mov dx, offset gameWinnerMessage
 	mov ah, 9h
@@ -620,10 +689,7 @@ gameWinner:
 	mov ah, 9h
 	int 21h
 	
-	
-continue:
-	xor ah, ah
-	int 16h
+	jmp resetGame	
 
 exit:    
 	mov ah,4ch
