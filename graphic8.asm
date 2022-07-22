@@ -17,7 +17,7 @@ data segment
 	welcomeToGame4 db "levels"
 	welcomeToGame5 db "exit"
 	level1 db "easy"
-	level2 db "nurmal"
+	level2 db "normal"
 	level3 db "hard"
 	level4 db "extreme!"
 	win1 db "you win!"
